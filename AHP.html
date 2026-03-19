@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AHP 住宿及餐飲業職能問卷</title>
+<style>
+:root{--primary:#667eea;--primary-dark:#5a6fd6;--accent:#764ba2;--bg:#f0f2f5;--card:#fff;--border:#e2e8f0;--text:#2d3748;--muted:#718096;--success:#48bb78;--danger:#e53e3e;--warning:#ed8936;--radius:12px;--shadow:0 2px 12px rgba(0,0,0,.08)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI','Microsoft JhengHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+/* ===== 問卷樣式 ===== */
+.survey-header{padding:40px 20px;text-align:center;color:#fff;position:relative}
+.survey-container{max-width:960px;margin:0 auto;padding:20px}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+.card-title{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;padding:16px 24px;font-size:1.05rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.card-body{padding:24px}
+.q-group{margin-bottom:18px}
+.q-label{font-weight:600;margin-bottom:8px;font-size:.92rem}
+.q-options{display:flex;flex-wrap:wrap;gap:8px}
+.q-options label{display:flex;align-items:center;gap:5px;padding:6px 14px;border:1px solid var(--border);border-radius:20px;cursor:pointer;font-size:.85rem;transition:all .2s}
+.q-options label:hover{border-color:var(--primary);background:rgba(102,126,234,.06)}
+.q-options input[type=radio]:checked+span{color:var(--primary);font-weight:600}
+.q-options label:has(input:checked){border-color:var(--primary);background:rgba(102,126,234,.1)}
+input[type=radio]{accent-color:var(--primary)}
+input[type=text]{border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:.85rem;font-family:inherit;width:200px}
+/* Likert */
+.likert-group{margin-bottom:20px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.likert-dim-header{background:linear-gradient(135deg,rgba(102,126,234,.1),rgba(118,75,162,.08));padding:12px 16px;font-weight:700;font-size:.95rem;color:var(--primary);border-bottom:1px solid var(--border)}
+.likert-item{padding:14px 16px;border-bottom:1px solid #f1f1f1;display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px}
+.likert-item:last-child{border-bottom:none}
+.likert-info{flex:1;min-width:200px}
+.likert-name{font-weight:600;font-size:.9rem}
+.likert-desc{font-size:.8rem;color:var(--muted);margin-top:2px}
+.likert-radios{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.likert-radios .lbl-end{font-size:.72rem;color:var(--muted);min-width:40px;text-align:center}
+.likert-radios label{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;min-width:28px}
+.likert-radios label span{font-size:.72rem;color:var(--muted)}
+/* AHP */
+.ahp-item{padding:14px 16px;border-bottom:1px solid #f1f1f1;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.ahp-item:last-child{border-bottom:none}
+.ahp-name{font-weight:600;font-size:.9rem;min-width:120px}
+.ahp-radios{display:flex;gap:4px;align-items:center;flex-shrink:0}
+.ahp-radios .lbl-end{font-size:.72rem;color:var(--muted);min-width:52px;text-align:center}
+.ahp-radios label{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;min-width:26px}
+.ahp-radios label span{font-size:.7rem;color:var(--muted)}
+/* Progress */
+.progress-bar{position:fixed;top:0;left:0;height:4px;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width .3s;z-index:1000}
+/* Submit */
+.submit-section{text-align:center;padding:30px}
+.btn-submit{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border:none;border-radius:8px;padding:14px 48px;font-size:1.05rem;font-weight:700;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.btn-submit:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(102,126,234,.35)}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+/* Toast */
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:#333;color:#fff;padding:12px 24px;border-radius:8px;font-size:.9rem;opacity:0;transition:all .3s;z-index:9999;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* ===== 編輯器樣式 ===== */
+.editor-container{max-width:860px;margin:0 auto;padding:20px}
+.editor-topbar{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+.editor-topbar h2{font-size:1.1rem}
+.section-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+.section-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.section-header h3{font-size:.95rem;color:var(--text)}
+.section-body{padding:20px}
+.btn{padding:7px 16px;border-radius:6px;font-size:.82rem;cursor:pointer;border:none;font-weight:600;transition:all .15s}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{background:#f7f7f7}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{background:#c53030}
+.btn-success{background:var(--success);color:#fff}
+.btn-success:hover{background:#38a169}
+.btn-warning{background:var(--warning);color:#fff}
+.btn-sm{padding:4px 10px;font-size:.76rem}
+.btn-group{display:flex;gap:8px;flex-wrap:wrap}
+/* Dimension editor */
+.dim-list{display:flex;flex-direction:column;gap:12px}
+.dim-card{border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.dim-header{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#f8f9fa;cursor:grab;border-bottom:1px solid var(--border)}
+.dim-header .drag-handle{cursor:grab;color:var(--muted);font-size:1.1rem}
+.dim-header .dim-code{background:var(--primary);color:#fff;padding:2px 8px;border-radius:4px;font-size:.78rem;font-weight:700}
+.dim-header input{flex:1;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:.85rem;font-family:inherit}
+.dim-items{padding:8px 14px}
+.dim-item-row{display:flex;gap:6px;align-items:flex-start;margin-bottom:6px;padding:6px 0;border-bottom:1px solid #f5f5f5}
+.dim-item-row:last-child{border-bottom:none}
+.dim-item-row input{flex:1;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:.83rem;font-family:inherit}
+.dim-item-row textarea{flex:2;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:.8rem;font-family:inherit;resize:vertical;min-height:36px}
+/* Question editor */
+.q-editor-item{border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px}
+.q-editor-item label{font-weight:600;font-size:.85rem;display:block;margin-bottom:6px}
+.chip-container{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{display:inline-flex;align-items:center;gap:4px;background:#edf2f7;padding:4px 10px;border-radius:16px;font-size:.8rem}
+.chip .remove-chip{cursor:pointer;color:var(--danger);font-weight:700;margin-left:2px}
+.chip-input{border:1px solid var(--border);border-radius:16px;padding:4px 10px;font-size:.8rem;width:120px;font-family:inherit}
+/* Modal */
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.active{opacity:1;pointer-events:auto}
+.modal{background:#fff;border-radius:12px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal h3{margin-bottom:12px}
+.modal p{color:var(--muted);margin-bottom:20px;font-size:.9rem}
+/* Color picker */
+.color-row{display:flex;align-items:center;gap:12px;margin-top:8px}
+.color-row input[type=color]{width:48px;height:36px;border:none;cursor:pointer;border-radius:6px}
+/* Responsive */
+@media(max-width:640px){
+  .likert-item,.ahp-item{flex-direction:column}
+  .likert-radios,.ahp-radios{align-self:flex-end}
+  .survey-container,.editor-container{padding:12px}
+}
+/* Quill overrides for editor */
+.ql-toolbar.ql-snow{border-radius:8px 8px 0 0!important;border-color:var(--border)!important}
+.ql-container.ql-snow{border-radius:0 0 8px 8px!important;border-color:var(--border)!important;min-height:150px;font-family:'Microsoft JhengHei',sans-serif}
+</style>
+</head>
+<body>
+
+<!-- ===== 進度條 ===== -->
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- ===== 問卷頁面 ===== -->
+<div id="surveyView">
+  <div class="survey-header" id="surveyHeader"></div>
+  <div class="survey-container">
+    <div id="personalSection"></div>
+    <div id="likertSection"></div>
+    <div id="ahpSection"></div>
+    <div class="submit-section">
+      <button class="btn-submit" id="btnSubmit" onclick="submitSurvey()">提交問卷</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 編輯器頁面 ===== -->
+<div id="editorView" style="display:none">
+  <div class="editor-topbar">
+    <h2>AHP 問卷編輯器</h2>
+    <div class="btn-group">
+      <button class="btn btn-warning" onclick="editorReset()">還原預設</button>
+      <button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4)" onclick="editorExportJSON()">匯出 JSON</button>
+      <label class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);margin:0">匯入 JSON<input type="file" accept=".json" onchange="editorImportJSON(event)" style="display:none"></label>
+      <button class="btn btn-success" onclick="editorSaveAndReturn()">儲存並套用至問卷</button>
+    </div>
+  </div>
+  <div class="editor-container">
+
+    <!-- ① Header -->
+    <div class="section-card">
+      <div class="section-header"><h3>① 問卷 Header</h3></div>
+      <div class="section-body">
+        <div id="editorQuillWrap"></div>
+        <div class="color-row" style="margin-top:14px">
+          <label style="font-weight:600;font-size:.88rem">背景色</label>
+          <input type="color" id="cfgBgColor" value="#667eea" onchange="editorPreviewBg()">
+          <div id="bgPreview" style="width:80px;height:36px;border-radius:6px;border:1px solid var(--border)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ② 構面與細項 -->
+    <div class="section-card">
+      <div class="section-header">
+        <h3>② 構面與細項管理</h3>
+        <button class="btn btn-primary btn-sm" onclick="editorAddDim()">+ 新增構面</button>
+      </div>
+      <div class="section-body">
+        <div id="dimList" class="dim-list"></div>
+      </div>
+    </div>
+
+    <!-- ③ 個人基本資料 -->
+    <div class="section-card">
+      <div class="section-header">
+        <h3>③ 個人基本資料</h3>
+        <button class="btn btn-primary btn-sm" onclick="editorAddQuestion()">+ 新增題目</button>
+      </div>
+      <div class="section-body">
+        <div style="margin-bottom:12px">
+          <label style="font-weight:600;font-size:.88rem">區段標題</label>
+          <input type="text" id="cfgPersonalTitle" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:.88rem;font-family:inherit;margin-top:4px">
+        </div>
+        <div id="questionList"></div>
+      </div>
+    </div>
+
+    <!-- ④ Google Sheets -->
+    <div class="section-card">
+      <div class="section-header"><h3>④ 提交設定（Google Sheets）</h3></div>
+      <div class="section-body">
+        <label style="font-weight:600;color:var(--primary);font-size:.9rem">Google Sheets API 網址</label>
+        <input type="text" id="cfgApiUrl" placeholder="https://script.google.com/macros/s/xxxxx/exec" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:.88rem;font-family:inherit;margin-top:6px">
+        <p style="font-size:.8rem;color:var(--muted);margin-top:6px">部署 Google Apps Script 後取得的網址。若留空，提交時會改為下載 JSON 檔案。</p>
+
+        <details style="margin-top:16px;border:1px solid var(--border);border-radius:8px;padding:0;background:#f8f9fa">
+          <summary style="cursor:pointer;padding:12px 16px;font-weight:600;color:var(--primary);font-size:.9rem;user-select:none">部署步驟與 Apps Script 程式碼</summary>
+          <div style="padding:0 16px 16px">
+            <ol style="font-size:.85rem;color:#333;line-height:1.8;padding-left:20px;margin:12px 0">
+              <li>開一個新的 <strong>Google Sheets</strong></li>
+              <li>上方選單 → <strong>擴充功能</strong> → <strong>Apps Script</strong></li>
+              <li>將下方程式碼<strong>全選複製</strong>，貼上取代預設內容</li>
+              <li>點擊「<strong>部署</strong>」→「<strong>新增部署</strong>」→ 類型選「<strong>網頁應用程式</strong>」
+                <ul style="margin:4px 0;padding-left:16px;list-style:disc">
+                  <li>執行身分：<strong>我</strong></li>
+                  <li>誰可以存取：<strong>所有人</strong></li>
+                </ul>
+              </li>
+              <li>點擊「部署」，完成授權後<strong>複製產生的網址</strong></li>
+              <li>將網址貼到上方「Google Sheets API 網址」欄位</li>
+            </ol>
+            <div style="position:relative">
+              <button onclick="editorCopyScript(this)" style="position:absolute;top:8px;right:8px;background:var(--primary);color:#fff;border:none;border-radius:4px;padding:4px 12px;font-size:.78rem;cursor:pointer;z-index:1">複製程式碼</button>
+              <pre id="gasCodeBlock" style="background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:14px;font-size:.78rem;line-height:1.6;overflow-x:auto;margin:0;white-space:pre;tab-size:2">function doPost(e) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var data = JSON.parse(e.postData.contents);
+
+    if (sheet.getLastRow() === 0) {
+      var headers = ['提交時間'];
+      var matrixKeys = Object.keys(data.matrix).sort();
+      matrixKeys.forEach(function(k) { headers.push(k); });
+      var personalKeys = Object.keys(data.personal);
+      personalKeys.forEach(function(k) { headers.push(k); });
+      sheet.appendRow(headers);
+    }
+
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var row = [];
+    headers.forEach(function(h) {
+      if (h === '提交時間') {
+        row.push(data.timestamp || new Date().toISOString());
+      } else if (data.matrix &amp;&amp; data.matrix[h] !== undefined) {
+        row.push(data.matrix[h]);
+      } else if (data.personal &amp;&amp; data.personal[h] !== undefined) {
+        row.push(data.personal[h]);
+      } else {
+        row.push('');
+      }
+    });
+
+    sheet.appendRow(row);
+
+    return ContentService
+      .createTextOutput(JSON.stringify({status: 'ok'}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({status: 'error', message: err.toString()}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}</pre>
+            </div>
+          </div>
+        </details>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3 id="modalTitle">確認</h3>
+    <p id="modalMsg"></p>
+    <div class="btn-group">
+      <button class="btn btn-outline" onclick="editorCloseModal()">取消</button>
+      <button class="btn btn-danger" id="modalConfirmBtn">確認</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== 頁面切換 =====
+var isEditorMode = location.hash === '#editor';
+var editorInitialized = false;
+var quillInstance = null;
+
+function showView(mode) {
+  isEditorMode = mode;
+  document.getElementById('surveyView').style.display = mode ? 'none' : '';
+  document.getElementById('editorView').style.display = mode ? '' : 'none';
+  document.getElementById('progressBar').style.display = mode ? 'none' : '';
+  if (mode && !editorInitialized) initEditor();
+  if (!mode) initSurvey();
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.ctrlKey && e.key.toLowerCase() === 'e') { e.preventDefault(); showView(!isEditorMode); }
+});
+
+// ===== localStorage =====
+function lsGet(k) { try { return localStorage.getItem('ahp_' + k); } catch(e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem('ahp_' + k, v); } catch(e) {} }
+function lsGetJSON(k, def) { var v = lsGet(k); if (!v) return def; try { return JSON.parse(v); } catch(e) { return def; } }
+
+// ===== 預設資料 =====
+var defaultHeaderHtml = '<h1 style="margin:0;font-size:1.6rem">因應AI時代及數位轉型</h1><h2 style="margin:6px 0 0;font-size:1.15rem;font-weight:400">員工共通性職能重要性研究 — AHP 問卷</h2><p style="margin:10px 0 0;font-size:.88rem;opacity:.9">國立臺北大學 EMBA 碩士在職專班</p>';
+var defaultBgColor = '#667eea';
+var defaultPersonalTitle = '基本資料';
+
+var defaultDimensions = [
+  { code:'A', name:'資料分析職能', items:[
+    {name:'數據解讀',desc:'能從各類數據與資訊中辨識關鍵訊息，準確解讀並萃取出具決策與行動意義內容的能力'},
+    {name:'數據分析',desc:'具備運用分析方法將有意義的資料進行整理、比較與判斷，及提出具體見解與改進建議能力'},
+    {name:'精準分類',desc:'能依據顧客的特性、行為與需求，運用資料與觀察進行有效分類與歸納，辨識差異之能力'},
+    {name:'資料安全',desc:'尊重顧客隱私，遵守公司資訊安全規範並且不外傳個資、不隨意使用顧客資訊'}
+  ]},
+  { code:'B', name:'作業流程職能', items:[
+    {name:'流程概念',desc:'具備跨部門協作與全流程運作之基本概念，能理解作業環節間的關聯與影響'},
+    {name:'流程適應',desc:'能依據情境調整作業方式，以降低接觸與勞動成本，提升流程效率與彈性之能力'},
+    {name:'操作能力',desc:'熟悉AI客服、資料系統等數位工具並能操作系統，查詢顧客資料、運用AI輔助回覆之能力'},
+    {name:'跨域職能',desc:'具備多職能整合與彈性應變能力，能跨越職務界線，具備多項職能可依營運需求靈活調整'}
+  ]},
+  { code:'C', name:'科技運用職能', items:[
+    {name:'平台開發',desc:'具備數位平台與品牌推廣的基礎知識，能應用不同領域之資訊與技術以強化品牌能見度'},
+    {name:'通路運用',desc:'能掌握並選擇適合的數位通路或外送平台，以提升品牌曝光與顧客接觸成效之能力'},
+    {name:'異業嫁接',desc:'具備理解合作夥伴系統之操作流程，具備跨平台協作與基本技術整合能力'},
+    {name:'數位裝置',desc:'能熟悉並運用數位工具（如線上客服、聊天機器人、行動支付、智能訂位系統等）與顧客互動，確保使用及服務過程順暢的能力'}
+  ]},
+  { code:'D', name:'顧客服務職能', items:[
+    {name:'應變解決',desc:'以顧客需求為中心，主動了解並回應，觀察反應提供個人化建議；能靈活應變並協助顧客有效解決問題'},
+    {name:'科技互動',desc:'顧客面對新科技時可能感到不安或陌生，服務人員能具備引導與協助顧客使用的能力'},
+    {name:'顧客體驗',desc:'具備顧客在整個與品牌互動過程中，提供個人化服務或建議的能力所形成的整體感受與印象等全程體驗的服務能力'},
+    {name:'同理傾聽',desc:'具備清晰表達與傾聽能力，能理解顧客情緒並適時關懷安撫，以正向語句冷靜溝通，展現真誠與關心，維持良好服務互動'}
+  ]},
+  { code:'E', name:'法規倫理職能', items:[
+    {name:'法規系統',desc:'具備查詢、解讀與運用相關法規、作業規範及稽核重點之能力，並熟悉法規查詢系統與作業平台操作，能有效支援組織合規管理'},
+    {name:'法規規範',desc:'能清楚理解並依據法規要求，於流程設計與管制點規劃中，落實相關規定之能力'},
+    {name:'法規遵循',desc:'確保包材、配送、減塑與環保等作業符合現行法規與標準，維持合法合規運作。並遵循數位安全、隱私與道德規範'},
+    {name:'數位倫理',desc:'能正確搜尋、評估與運用資訊與科技，辨識資訊真偽與可信度，並在持續學習新技術的同時，遵循資訊安全、個資保護與相關倫理規範，展現負責且安全的數位行為'}
+  ]}
+];
+
+var defaultQuestions = [
+  {label:'您的性別',options:['生理男','生理女'],hasOther:false},
+  {label:'您的年齡',options:['20歲以下','21-30歲','31-40歲','41-50歲','51歲以上'],hasOther:false},
+  {label:'教育程度',options:['高中(職)以下','大學及大專','研究所以上'],hasOther:false},
+  {label:'工作年資',options:['1年以下','1-5年','6~10年','11~15年','16~20年','20年以上'],hasOther:false},
+  {label:'行業別',options:['住宿業','餐飲業','製造業','金融及保險業','農、林、漁、牧業','教育業','礦業及土石採取業','電力及燃氣供應業','用水供應及污染整治業','不動產業','藝術、娛樂及休閒服務業','運輸及倉儲業','出版影音及資通訊業','專業、科學及技術服務業','公共行政及國防；強制性社會安全','支援服務業','醫療保健及社會工作服務業','其他服務業','營建工程業','批發及零售業'],hasOther:false},
+  {label:'工作地點',options:['臺北市','新北市','基隆市','宜蘭縣','花蓮縣','金門縣','連江縣','桃園市','新竹縣','新竹市','苗栗縣','臺中市','彰化縣','南投縣','雲林縣','嘉義市','嘉義縣','臺南市','高雄市','屏東縣','澎湖縣','臺東縣'],hasOther:false},
+  {label:'所屬職位',options:['一般員工','基層主管','中階主管','高階主管','企業主'],hasOther:false},
+  {label:'部門職務',options:['前場/外場服務','後場事務（廚房/料理區）','房務清潔','後勤與支援職','櫃台客務/前廳服務','門市服務','經營幕僚類','人資行政類','總務採購類','法務稽核類','行銷業務類','財務會計稅務類','產品企劃類','工程品保類','創新研發類'],hasOther:true}
+];
+
+function getConfig() {
+  return {
+    headerHtml: lsGet('header_html') || defaultHeaderHtml,
+    headerBg: lsGet('header_bg') || defaultBgColor,
+    personalTitle: lsGet('personal_title') || defaultPersonalTitle,
+    dimensions: lsGetJSON('dimensions', defaultDimensions),
+    questions: lsGetJSON('questions', defaultQuestions)
+  };
+}
+
+// ===== 問卷渲染 =====
+function initSurvey() {
+  var cfg = getConfig();
+  // Header
+  var hdr = document.getElementById('surveyHeader');
+  hdr.innerHTML = cfg.headerHtml;
+  hdr.style.background = cfg.headerBg;
+
+  // Personal info
+  var pHtml = '<div class="card"><div class="card-title">' + escHtml(cfg.personalTitle) + '</div><div class="card-body">';
+  cfg.questions.forEach(function(q, qi) {
+    pHtml += '<div class="q-group"><div class="q-label">' + (qi+1) + '. ' + escHtml(q.label) + '</div><div class="q-options">';
+    q.options.forEach(function(opt, oi) {
+      pHtml += '<label><input type="radio" name="pq_' + qi + '" value="' + escAttr(opt) + '" onchange="updateProgress()"><span>' + escHtml(opt) + '</span></label>';
+    });
+    if (q.hasOther) {
+      pHtml += '<label><input type="radio" name="pq_' + qi + '" value="__other__" onchange="updateProgress()"><span>其他</span></label>';
+      pHtml += '<input type="text" class="other-input" data-q="' + qi + '" placeholder="請輸入" style="display:none">';
+    }
+    pHtml += '</div></div>';
+  });
+  pHtml += '</div></div>';
+  document.getElementById('personalSection').innerHTML = pHtml;
+
+  // Show/hide other input
+  document.querySelectorAll('.q-options input[type=radio]').forEach(function(r) {
+    r.addEventListener('change', function() {
+      var grp = this.closest('.q-group');
+      var otherInput = grp ? grp.querySelector('.other-input') : null;
+      if (otherInput) otherInput.style.display = (this.value === '__other__' && this.checked) ? '' : 'none';
+    });
+  });
+
+  // Part 1: Likert (1-5)
+  var lHtml = '<div class="card"><div class="card-title">第一部分：數位職能重要性評量（1-5）</div><div class="card-body">';
+  lHtml += '<p style="font-size:.84rem;color:var(--muted);margin-bottom:16px">請針對以下各項職能指標，依據您的認知評估其重要程度。1 = 非常不同意，5 = 非常同意</p>';
+  cfg.dimensions.forEach(function(dim) {
+    lHtml += '<div class="likert-group"><div class="likert-dim-header">' + escHtml(dim.code + '. ' + dim.name) + '</div>';
+    dim.items.forEach(function(item, ii) {
+      var rname = 'likert_' + dim.code + '_' + ii;
+      lHtml += '<div class="likert-item"><div class="likert-info"><div class="likert-name">' + escHtml(item.name) + '</div>';
+      lHtml += '<div class="likert-desc">' + escHtml(item.desc) + '</div></div>';
+      lHtml += '<div class="likert-radios"><span class="lbl-end">不同意</span>';
+      for (var s = 1; s <= 5; s++) {
+        lHtml += '<label><span>' + s + '</span><input type="radio" name="' + rname + '" value="' + s + '" onchange="updateProgress()"></label>';
+      }
+      lHtml += '<span class="lbl-end">同意</span></div></div>';
+    });
+    lHtml += '</div>';
+  });
+  lHtml += '</div></div>';
+  document.getElementById('likertSection').innerHTML = lHtml;
+
+  // Part 2: AHP (1-9)
+  var aHtml = '<div class="card"><div class="card-title">第二部分：AHP 構面與細項重要性評比（1-9）</div><div class="card-body">';
+  aHtml += '<p style="font-size:.84rem;color:var(--muted);margin-bottom:16px">1 = 非常不重要，9 = 非常重要。填完後數字視同彼此間的相對重要性。</p>';
+
+  // Dimension-level
+  aHtml += '<div class="likert-group"><div class="likert-dim-header">構面重要性</div>';
+  cfg.dimensions.forEach(function(dim) {
+    var rname = 'ahp_dim_' + dim.code;
+    aHtml += '<div class="ahp-item"><div class="ahp-name">' + escHtml(dim.name) + '</div>';
+    aHtml += '<div class="ahp-radios"><span class="lbl-end">不重要</span>';
+    for (var s = 1; s <= 9; s++) {
+      aHtml += '<label><span>' + s + '</span><input type="radio" name="' + rname + '" value="' + s + '" onchange="updateProgress()"></label>';
+    }
+    aHtml += '<span class="lbl-end">重要</span></div></div>';
+  });
+  aHtml += '</div>';
+
+  // Sub-item level per dimension
+  cfg.dimensions.forEach(function(dim) {
+    aHtml += '<div class="likert-group" style="margin-top:12px"><div class="likert-dim-header">' + escHtml(dim.name) + ' — 細項重要性</div>';
+    dim.items.forEach(function(item, ii) {
+      var rname = 'ahp_item_' + dim.code + '_' + ii;
+      aHtml += '<div class="ahp-item"><div class="ahp-name">' + escHtml(item.name) + '</div>';
+      aHtml += '<div class="ahp-radios"><span class="lbl-end">不重要</span>';
+      for (var s = 1; s <= 9; s++) {
+        aHtml += '<label><span>' + s + '</span><input type="radio" name="' + rname + '" value="' + s + '" onchange="updateProgress()"></label>';
+      }
+      aHtml += '<span class="lbl-end">重要</span></div></div>';
+    });
+    aHtml += '</div>';
+  });
+
+  aHtml += '</div></div>';
+  document.getElementById('ahpSection').innerHTML = aHtml;
+  updateProgress();
+}
+
+function updateProgress() {
+  var total = document.querySelectorAll('#surveyView input[type=radio]').length;
+  var groups = {};
+  document.querySelectorAll('#surveyView input[type=radio]').forEach(function(r) { groups[r.name] = true; });
+  var totalGroups = Object.keys(groups).length;
+  var answered = 0;
+  Object.keys(groups).forEach(function(name) {
+    if (document.querySelector('#surveyView input[name="' + name + '"]:checked')) answered++;
+  });
+  var pct = totalGroups > 0 ? (answered / totalGroups * 100) : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+
+// ===== 提交 =====
+function submitSurvey() {
+  var cfg = getConfig();
+  var matrix = {};
+  var personal = {};
+
+  // Personal
+  var allAnswered = true;
+  cfg.questions.forEach(function(q, qi) {
+    var sel = document.querySelector('input[name="pq_' + qi + '"]:checked');
+    if (!sel) { allAnswered = false; return; }
+    var val = sel.value;
+    if (val === '__other__') {
+      var oi = document.querySelector('.other-input[data-q="' + qi + '"]');
+      val = oi ? oi.value.trim() : '';
+      if (!val) { allAnswered = false; return; }
+    }
+    personal[q.label] = val;
+  });
+
+  // Likert
+  cfg.dimensions.forEach(function(dim) {
+    dim.items.forEach(function(item, ii) {
+      var sel = document.querySelector('input[name="likert_' + dim.code + '_' + ii + '"]:checked');
+      if (!sel) { allAnswered = false; return; }
+      matrix['Likert_' + dim.code + '_' + item.name] = parseInt(sel.value);
+    });
+  });
+
+  // AHP dimensions
+  cfg.dimensions.forEach(function(dim) {
+    var sel = document.querySelector('input[name="ahp_dim_' + dim.code + '"]:checked');
+    if (!sel) { allAnswered = false; return; }
+    matrix['AHP_構面_' + dim.name] = parseInt(sel.value);
+  });
+
+  // AHP items
+  cfg.dimensions.forEach(function(dim) {
+    dim.items.forEach(function(item, ii) {
+      var sel = document.querySelector('input[name="ahp_item_' + dim.code + '_' + ii + '"]:checked');
+      if (!sel) { allAnswered = false; return; }
+      matrix['AHP_' + dim.code + '_' + item.name] = parseInt(sel.value);
+    });
+  });
+
+  if (!allAnswered) { showToast('請完成所有題目後再提交', 'warning'); return; }
+
+  var payload = { timestamp: new Date().toISOString(), matrix: matrix, personal: personal };
+  var apiUrl = lsGet('api_url') || '';
+
+  if (apiUrl) {
+    document.getElementById('btnSubmit').disabled = true;
+    document.getElementById('btnSubmit').textContent = '提交中...';
+    fetch(apiUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      .then(function() {
+        showToast('問卷已成功提交！感謝您的填寫', 'success');
+        document.getElementById('btnSubmit').textContent = '已提交';
+      })
+      .catch(function() {
+        showToast('提交失敗，已改為下載 JSON', 'warning');
+        downloadJSON(payload);
+        document.getElementById('btnSubmit').disabled = false;
+        document.getElementById('btnSubmit').textContent = '提交問卷';
+      });
+  } else {
+    downloadJSON(payload);
+    showToast('已下載問卷結果 JSON 檔案', 'success');
+  }
+}
+
+function downloadJSON(data) {
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'AHP_response_' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+}
+
+// ===== 編輯器 =====
+var editorDimensions = [];
+var editorQuestions = [];
+
+function initEditor() {
+  editorInitialized = true;
+  // Load Quill
+  var link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'https://cdn.quilljs.com/2.0.3/quill.snow.css';
+  document.head.appendChild(link);
+  var script = document.createElement('script');
+  script.src = 'https://cdn.quilljs.com/2.0.3/quill.js';
+  script.onload = function() { setupQuill(); };
+  document.head.appendChild(script);
+
+  var cfg = getConfig();
+  document.getElementById('cfgBgColor').value = cfg.headerBg;
+  editorPreviewBg();
+  document.getElementById('cfgPersonalTitle').value = cfg.personalTitle;
+  document.getElementById('cfgApiUrl').value = lsGet('api_url') || '';
+
+  editorDimensions = JSON.parse(JSON.stringify(cfg.dimensions));
+  editorQuestions = JSON.parse(JSON.stringify(cfg.questions));
+  renderDimList();
+  renderQuestionList();
+}
+
+function setupQuill() {
+  var wrap = document.getElementById('editorQuillWrap');
+  wrap.innerHTML = '<div id="quillEditor"></div>';
+  quillInstance = new Quill('#quillEditor', {
+    theme: 'snow',
+    modules: { toolbar: [['bold', 'italic', 'underline'], [{ header: [1, 2, 3, false] }], [{ align: [] }], [{ color: [] }], ['clean']] }
+  });
+  var cfg = getConfig();
+  quillInstance.root.innerHTML = cfg.headerHtml;
+}
+
+// ===== 構面管理 =====
+function renderDimList() {
+  var html = '';
+  editorDimensions.forEach(function(dim, di) {
+    html += '<div class="dim-card" draggable="true" data-di="' + di + '">';
+    html += '<div class="dim-header"><span class="drag-handle">&#9776;</span>';
+    html += '<span class="dim-code">' + dim.code + '</span>';
+    html += '<input value="' + escAttr(dim.name) + '" onchange="editorDimNameChange(' + di + ',this.value)">';
+    html += '<button class="btn btn-sm btn-primary" onclick="editorAddItem(' + di + ')">+ 細項</button>';
+    html += '<button class="btn btn-sm btn-danger" onclick="editorDeleteDim(' + di + ')">刪除</button>';
+    html += '</div><div class="dim-items">';
+    dim.items.forEach(function(item, ii) {
+      html += '<div class="dim-item-row">';
+      html += '<input value="' + escAttr(item.name) + '" placeholder="細項名稱" style="flex:.8" onchange="editorItemNameChange(' + di + ',' + ii + ',this.value)">';
+      html += '<textarea placeholder="意涵說明" onchange="editorItemDescChange(' + di + ',' + ii + ',this.value)">' + escHtml(item.desc) + '</textarea>';
+      html += '<button class="btn btn-sm btn-danger" onclick="editorDeleteItem(' + di + ',' + ii + ')">✕</button>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  });
+  document.getElementById('dimList').innerHTML = html;
+  setupDimDrag();
+}
+
+function editorAddDim() {
+  var codes = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  var usedCodes = editorDimensions.map(function(d) { return d.code; });
+  var newCode = '';
+  for (var i = 0; i < codes.length; i++) { if (usedCodes.indexOf(codes[i]) === -1) { newCode = codes[i]; break; } }
+  if (!newCode) newCode = 'Z' + editorDimensions.length;
+  editorDimensions.push({ code: newCode, name: '新構面', items: [{ name: '新細項', desc: '' }] });
+  renderDimList();
+}
+
+function editorDeleteDim(di) {
+  editorShowModal('刪除構面', '確定要刪除「' + editorDimensions[di].name + '」及其所有細項嗎？', function() {
+    editorDimensions.splice(di, 1);
+    recodeDims();
+    renderDimList();
+    editorCloseModal();
+  });
+}
+
+function editorDimNameChange(di, val) { editorDimensions[di].name = val; }
+function editorAddItem(di) { editorDimensions[di].items.push({ name: '新細項', desc: '' }); renderDimList(); }
+function editorDeleteItem(di, ii) { editorDimensions[di].items.splice(ii, 1); renderDimList(); }
+function editorItemNameChange(di, ii, val) { editorDimensions[di].items[ii].name = val; }
+function editorItemDescChange(di, ii, val) { editorDimensions[di].items[ii].desc = val; }
+
+function recodeDims() {
+  var codes = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  editorDimensions.forEach(function(d, i) { d.code = i < 26 ? codes[i] : 'Z' + i; });
+}
+
+function setupDimDrag() {
+  var cards = document.querySelectorAll('.dim-card[draggable]');
+  var dragIdx = null;
+  cards.forEach(function(card) {
+    card.addEventListener('dragstart', function(e) { dragIdx = parseInt(this.dataset.di); this.style.opacity = '.5'; });
+    card.addEventListener('dragend', function() { this.style.opacity = ''; });
+    card.addEventListener('dragover', function(e) { e.preventDefault(); });
+    card.addEventListener('drop', function(e) {
+      e.preventDefault();
+      var dropIdx = parseInt(this.dataset.di);
+      if (dragIdx !== null && dragIdx !== dropIdx) {
+        var item = editorDimensions.splice(dragIdx, 1)[0];
+        editorDimensions.splice(dropIdx, 0, item);
+        recodeDims();
+        renderDimList();
+      }
+    });
+  });
+}
+
+// ===== 問題管理 =====
+function renderQuestionList() {
+  var html = '';
+  editorQuestions.forEach(function(q, qi) {
+    html += '<div class="q-editor-item">';
+    html += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">';
+    html += '<input value="' + escAttr(q.label) + '" style="flex:1;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:.88rem;font-family:inherit" onchange="editorQuestions[' + qi + '].label=this.value">';
+    html += '<label style="font-size:.8rem;display:flex;align-items:center;gap:4px;white-space:nowrap"><input type="checkbox" ' + (q.hasOther ? 'checked' : '') + ' onchange="editorQuestions[' + qi + '].hasOther=this.checked"> 含「其他」</label>';
+    html += '<button class="btn btn-sm btn-danger" onclick="editorDeleteQuestion(' + qi + ')">刪除</button>';
+    html += '</div>';
+    html += '<div class="chip-container" id="chips_' + qi + '">';
+    q.options.forEach(function(opt, oi) {
+      html += '<span class="chip">' + escHtml(opt) + '<span class="remove-chip" onclick="editorRemoveChip(' + qi + ',' + oi + ')">✕</span></span>';
+    });
+    html += '<input class="chip-input" placeholder="新增選項..." onkeydown="editorChipKey(event,' + qi + ')">';
+    html += '</div></div>';
+  });
+  document.getElementById('questionList').innerHTML = html;
+}
+
+function editorAddQuestion() {
+  editorQuestions.push({ label: '新題目', options: ['選項1', '選項2'], hasOther: false });
+  renderQuestionList();
+}
+
+function editorDeleteQuestion(qi) {
+  editorQuestions.splice(qi, 1);
+  renderQuestionList();
+}
+
+function editorRemoveChip(qi, oi) {
+  editorQuestions[qi].options.splice(oi, 1);
+  renderQuestionList();
+}
+
+function editorChipKey(e, qi) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    var val = e.target.value.trim();
+    if (val) { editorQuestions[qi].options.push(val); renderQuestionList(); }
+  }
+}
+
+// ===== 儲存/還原 =====
+function editorSaveAndReturn() {
+  if (quillInstance) lsSet('header_html', quillInstance.root.innerHTML);
+  lsSet('header_bg', document.getElementById('cfgBgColor').value);
+  lsSet('personal_title', document.getElementById('cfgPersonalTitle').value.trim() || defaultPersonalTitle);
+  lsSet('dimensions', JSON.stringify(editorDimensions));
+  lsSet('questions', JSON.stringify(editorQuestions));
+  lsSet('api_url', document.getElementById('cfgApiUrl').value.trim());
+  showToast('設定已儲存');
+  showView(false);
+}
+
+function editorReset() {
+  editorShowModal('還原預設', '確定要還原所有設定為預設值嗎？', function() {
+    ['header_html','header_bg','personal_title','dimensions','questions','api_url'].forEach(function(k) {
+      try { localStorage.removeItem('ahp_' + k); } catch(e) {}
+    });
+    editorDimensions = JSON.parse(JSON.stringify(defaultDimensions));
+    editorQuestions = JSON.parse(JSON.stringify(defaultQuestions));
+    if (quillInstance) quillInstance.root.innerHTML = defaultHeaderHtml;
+    document.getElementById('cfgBgColor').value = defaultBgColor;
+    editorPreviewBg();
+    document.getElementById('cfgPersonalTitle').value = defaultPersonalTitle;
+    document.getElementById('cfgApiUrl').value = '';
+    renderDimList();
+    renderQuestionList();
+    editorCloseModal();
+    showToast('已還原為預設值');
+  });
+}
+
+function editorExportJSON() {
+  var data = {
+    headerHtml: quillInstance ? quillInstance.root.innerHTML : getConfig().headerHtml,
+    headerBg: document.getElementById('cfgBgColor').value,
+    personalTitle: document.getElementById('cfgPersonalTitle').value,
+    dimensions: editorDimensions,
+    questions: editorQuestions,
+    apiUrl: document.getElementById('cfgApiUrl').value
+  };
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'AHP_config_' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+}
+
+function editorImportJSON(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var data = JSON.parse(ev.target.result);
+      if (data.headerHtml && quillInstance) quillInstance.root.innerHTML = data.headerHtml;
+      if (data.headerBg) { document.getElementById('cfgBgColor').value = data.headerBg; editorPreviewBg(); }
+      if (data.personalTitle) document.getElementById('cfgPersonalTitle').value = data.personalTitle;
+      if (data.dimensions) { editorDimensions = data.dimensions; renderDimList(); }
+      if (data.questions) { editorQuestions = data.questions; renderQuestionList(); }
+      if (data.apiUrl !== undefined) document.getElementById('cfgApiUrl').value = data.apiUrl;
+      showToast('匯入成功');
+    } catch (err) { showToast('匯入失敗：檔案格式錯誤', 'danger'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ===== 工具函式 =====
+function escHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function escAttr(s) { return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;'); }
+function editorPreviewBg() { document.getElementById('bgPreview').style.background = document.getElementById('cfgBgColor').value; }
+
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = type === 'warning' ? '#ed8936' : type === 'danger' ? '#e53e3e' : type === 'success' ? '#48bb78' : '#333';
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
+
+function editorShowModal(title, msg, onConfirm) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalMsg').textContent = msg;
+  document.getElementById('modalConfirmBtn').onclick = onConfirm;
+  document.getElementById('modalOverlay').classList.add('active');
+}
+function editorCloseModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+function editorCopyScript(btn) {
+  var code = document.getElementById('gasCodeBlock').textContent;
+  navigator.clipboard.writeText(code).then(function() { btn.textContent = '已複製!'; setTimeout(function() { btn.textContent = '複製程式碼'; }, 2000); });
+}
+
+// ===== 啟動 =====
+showView(isEditorMode);
+</script>
+</body>
+</html>
