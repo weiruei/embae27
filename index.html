@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEMATEL問卷</title>
+<!-- Quill (editor only, lazy load) -->
+<link id="quillCSS" rel="stylesheet" href="" disabled>
+<style>
+  :root {
+    --primary: #2c5f8a;
+    --primary-light: #e8f0f8;
+    --accent: #3a7cc3;
+    --border: #d0d7de;
+    --bg: #f6f8fa;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --danger: #dc2626;
+    --success: #10b981;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft JhengHei", "Noto Sans TC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6;
+  }
+
+  /* ===== Survey Styles ===== */
+  #surveyView .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .header {
+    background: var(--primary); color: #fff; padding: 40px 30px;
+    border-radius: 12px; margin-bottom: 24px; text-align: center; line-height: 1.8;
+  }
+  .header h1 { font-size: 1.6rem; margin-bottom: 8px; }
+  .header h2 { font-size: 1.1rem; font-weight: 400; opacity: .9; }
+  .header p { font-size: .95rem; opacity: .85; }
+  .header .ql-align-center { text-align: center; }
+  .header .ql-align-right { text-align: right; }
+  .header .ql-align-left { text-align: left; }
+
+  .card {
+    background: #fff; border: 1px solid var(--border); border-radius: 10px;
+    padding: 28px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .card h3 {
+    font-size: 1.15rem; color: var(--primary); margin-bottom: 16px;
+    padding-bottom: 10px; border-bottom: 2px solid var(--primary-light);
+  }
+
+  .scale-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: .9rem; }
+  .scale-table th, .scale-table td { border: 1px solid var(--border); padding: 8px 14px; text-align: center; }
+  .scale-table th { background: var(--primary); color: #fff; }
+  .scale-table td { background: var(--primary-light); }
+
+  .example { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 14px 18px; border-radius: 6px; margin: 16px 0; font-size: .9rem; }
+  .example p { margin: 4px 0; }
+
+  .factor-list { list-style: none; display: grid; gap: 10px; }
+  .factor-list li { padding: 10px 14px; background: var(--primary-light); border-radius: 6px; font-size: .9rem; }
+  .factor-list li strong { color: var(--primary); margin-right: 6px; }
+
+  .matrix-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 8px; }
+  .matrix { border-collapse: collapse; font-size: .78rem; width: 100%; table-layout: auto; }
+  .matrix th, .matrix td { border: 1px solid var(--border); padding: 4px 3px; text-align: center; }
+  .matrix thead th {
+    background: var(--primary); color: #fff; font-weight: 600;
+    position: sticky; top: 0; z-index: 2;
+    writing-mode: vertical-rl; text-orientation: mixed;
+    height: 150px; min-width: 42px; letter-spacing: 1px; white-space: normal; line-height: 1.4;
+  }
+  .matrix thead th:first-child { writing-mode: horizontal-tb; height: auto; min-width: 160px; }
+  .matrix tbody th {
+    background: var(--primary-light); color: var(--primary); font-weight: 600;
+    text-align: left; padding: 6px 8px; position: sticky; left: 0; z-index: 1; min-width: 160px;
+  }
+  .matrix td.diagonal { background: #e5e7eb; }
+  .matrix select { width: 44px; padding: 3px 2px; border: 1px solid #ccc; border-radius: 4px; font-size: .8rem; text-align: center; cursor: pointer; background: #fff; }
+  .matrix select:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+  .matrix select.filled { background: #dbeafe; border-color: var(--accent); }
+
+  .form-group { margin-bottom: 20px; }
+  .form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--primary); }
+  .form-group .options { display: flex; flex-wrap: wrap; gap: 12px; }
+  .form-group .options label {
+    font-weight: 400; color: var(--text); display: flex; align-items: center; gap: 6px;
+    cursor: pointer; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; transition: .2s;
+  }
+  .form-group .options label:hover { background: var(--primary-light); }
+  .form-group .options input:checked + span { color: var(--primary); font-weight: 600; }
+  .form-group .options label:has(input:checked) { border-color: var(--accent); background: var(--primary-light); }
+  .form-group input[type="text"] { border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: .95rem; width: 200px; }
+  .form-group input[type="text"]:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+
+  .progress-bar { position: fixed; top: 0; left: 0; height: 4px; background: var(--accent); z-index: 999; transition: width .3s; }
+
+  .btn-submit {
+    display: block; width: 100%; max-width: 320px; margin: 30px auto; padding: 14px;
+    background: var(--primary); color: #fff; border: none; border-radius: 8px;
+    font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: .2s;
+  }
+  .btn-submit:hover { background: var(--accent); transform: translateY(-1px); }
+  .btn-submit:disabled { background: #9ca3af; cursor: not-allowed; transform: none; }
+
+  .required-mark { color: var(--danger); margin-left: 2px; }
+  .error-msg { color: var(--danger); font-size: .85rem; margin-top: 6px; display: none; }
+
+  .toast {
+    position: fixed; top: 20px; right: 20px; background: #10b981; color: #fff;
+    padding: 16px 24px; border-radius: 8px; font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,.15);
+    transform: translateX(120%); transition: transform .4s; z-index: 1000;
+  }
+  .toast.show { transform: translateX(0); }
+
+  .matrix th[data-tooltip] { cursor: help; position: relative; }
+  .tooltip-popup {
+    position: fixed; background: #1e293b; color: #fff; padding: 12px 16px; border-radius: 8px;
+    font-size: .88rem; font-weight: 400; line-height: 1.6; max-width: 340px;
+    white-space: normal; text-align: left; box-shadow: 0 8px 24px rgba(0,0,0,.25);
+    z-index: 9999; pointer-events: none; opacity: 0; transition: opacity .2s;
+    writing-mode: horizontal-tb; text-orientation: initial; letter-spacing: 0;
+  }
+  .tooltip-popup.visible { opacity: 1; }
+  .tooltip-popup .tip-title { font-weight: 700; color: #93c5fd; margin-bottom: 4px; font-size: .92rem; }
+
+  /* ===== Editor Styles ===== */
+  #editorView { display: none; }
+  #editorView .container { max-width: 960px; margin: 0 auto; padding: 20px; }
+
+  .editor-bar {
+    background: linear-gradient(135deg, #1e4060, var(--primary)); color: #fff;
+    padding: 20px 28px; border-radius: 12px; margin-bottom: 24px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  }
+  .editor-bar h1 { font-size: 1.3rem; }
+  .editor-bar .desc { font-size: .85rem; opacity: .8; }
+
+  .toolbar {
+    display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px;
+    position: sticky; top: 0; z-index: 50;
+    background: var(--bg); padding: 12px 0; border-bottom: 1px solid var(--border);
+  }
+  .btn {
+    padding: 10px 18px; border: none; border-radius: 8px;
+    font-size: .88rem; font-weight: 600; cursor: pointer; transition: .2s; font-family: inherit;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--accent); }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { background: #0d9668; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #b91c1c; }
+  .btn-outline { background: #fff; color: var(--primary); border: 2px solid var(--primary); }
+  .btn-outline:hover { background: var(--primary-light); }
+  .btn-sm { padding: 6px 14px; font-size: .82rem; }
+
+  .section-card {
+    background: #fff; border: 1px solid var(--border); border-radius: 10px;
+    margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,.06); overflow: hidden;
+  }
+  .section-header {
+    padding: 14px 20px; background: var(--primary-light);
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-header h3 { font-size: 1rem; color: var(--primary); margin: 0; }
+  .section-badge { font-size: .78rem; background: var(--primary); color: #fff; padding: 2px 10px; border-radius: 12px; }
+  .section-body { padding: 20px; }
+
+  .header-quill-wrap { border-radius: 10px; overflow: hidden; transition: background .3s; }
+  .color-picker-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+  .color-picker-group { display: flex; align-items: center; gap: 8px; }
+  .color-picker-group label { font-size: .85rem; font-weight: 600; color: var(--primary); white-space: nowrap; }
+  .color-picker-group input[type="color"] { width: 40px; height: 32px; border: 2px solid var(--border); border-radius: 6px; cursor: pointer; padding: 2px; }
+
+  .factor-item { display: flex; align-items: stretch; border-bottom: 1px solid var(--border); transition: background .15s; }
+  .factor-item:last-child { border-bottom: none; }
+  .factor-item:hover { background: #fafbfc; }
+  .factor-item.dragging { opacity: .5; background: var(--primary-light); }
+  .factor-item.drag-over { border-top: 3px solid var(--accent); }
+  .drag-handle { display: flex; align-items: center; padding: 12px; cursor: grab; color: var(--muted); font-size: 1.2rem; user-select: none; }
+  .drag-handle:active { cursor: grabbing; }
+  .factor-code { display: flex; align-items: center; justify-content: center; min-width: 44px; font-weight: 700; font-size: 1.05rem; color: var(--primary); background: var(--primary-light); }
+  .factor-content { flex: 1; padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; }
+  .factor-content input, .factor-content textarea { border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-size: .88rem; font-family: inherit; transition: border-color .2s; }
+  .factor-content input:focus, .factor-content textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(58,124,195,.15); }
+  .factor-content input { font-weight: 600; }
+  .factor-content textarea { resize: vertical; min-height: 36px; }
+  .factor-actions { display: flex; align-items: center; padding: 10px; }
+  .btn-del { width: 34px; height: 34px; border: none; border-radius: 8px; background: transparent; color: var(--muted); font-size: 1.1rem; cursor: pointer; transition: .2s; display: flex; align-items: center; justify-content: center; }
+  .btn-del:hover { background: #fee2e2; color: var(--danger); }
+
+  .question-item { border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 14px; background: #fafbfc; position: relative; }
+  .question-item:hover { border-color: var(--accent); }
+  .question-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .question-top input[type="text"] { flex: 1; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-size: .9rem; font-weight: 600; font-family: inherit; }
+  .question-top input[type="text"]:focus { outline: none; border-color: var(--accent); }
+  .question-top .btn-del { flex-shrink: 0; }
+
+  .chips-area { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .chip { display: flex; align-items: center; gap: 4px; background: var(--primary-light); border: 1px solid var(--border); padding: 4px 10px; border-radius: 20px; font-size: .84rem; }
+  .chip .chip-remove { cursor: pointer; color: var(--muted); font-size: .9rem; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: .15s; }
+  .chip .chip-remove:hover { background: #fee2e2; color: var(--danger); }
+  .chip-add-input { border: 1px dashed var(--border); border-radius: 20px; padding: 4px 10px; font-size: .84rem; width: 100px; outline: none; font-family: inherit; }
+  .chip-add-input:focus { border-color: var(--accent); }
+  .has-other-toggle { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: .82rem; color: var(--muted); }
+  .has-other-toggle input { cursor: pointer; }
+
+  .empty-state { text-align: center; padding: 50px 20px; color: var(--muted); }
+  .empty-state .icon { font-size: 2.5rem; margin-bottom: 10px; }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.4);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 999; opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .modal-overlay.active { opacity: 1; pointer-events: auto; }
+  .modal { background: #fff; border-radius: 12px; padding: 28px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,.2); }
+  .modal h3 { margin-bottom: 12px; color: var(--danger); }
+  .modal p { margin-bottom: 20px; color: var(--muted); font-size: .9rem; }
+  .modal .btn-group { display: flex; gap: 10px; justify-content: center; }
+
+  /* Quill overrides */
+  #headerQuill { min-height: 160px; }
+  #headerQuill .ql-editor { color: #fff; text-align: center; font-size: .95rem; line-height: 1.8; padding: 30px 24px; }
+  #headerQuill .ql-editor h1 { color: #fff; font-size: 1.5rem; margin-bottom: 6px; }
+  #headerQuill .ql-editor h2 { color: #fff; font-size: 1.05rem; font-weight: 400; opacity: .9; }
+  #headerQuill .ql-editor p { opacity: .88; margin-top: 10px; }
+  #headerQuill .ql-editor .ql-align-center { text-align: center; }
+  .header-toolbar-wrap .ql-toolbar { border: none; background: rgba(255,255,255,.12); border-radius: 8px 8px 0 0; }
+  .header-toolbar-wrap .ql-toolbar .ql-stroke { stroke: #fff; }
+  .header-toolbar-wrap .ql-toolbar .ql-fill { fill: #fff; }
+  .header-toolbar-wrap .ql-toolbar .ql-picker-label { color: #fff; }
+  .header-toolbar-wrap .ql-toolbar button:hover .ql-stroke,
+  .header-toolbar-wrap .ql-toolbar .ql-picker-label:hover { stroke: #fbbf24; color: #fbbf24; }
+  #headerQuill { border: none; border-radius: 0 0 10px 10px; }
+
+  @media (max-width: 768px) {
+    #surveyView .container { padding: 12px; }
+    .header { padding: 24px 16px; }
+    .header h1 { font-size: 1.2rem; }
+    .card { padding: 16px; }
+    .matrix thead th { height: 90px; font-size: .7rem; }
+    .matrix tbody th { font-size: .72rem; min-width: 120px; }
+    #editorView .container { padding: 12px; }
+    .editor-bar { padding: 16px; }
+    .editor-bar h1 { font-size: 1.05rem; }
+    .toolbar { flex-direction: column; }
+    .btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== 問卷 ==================== -->
+<div id="surveyView">
+  <div class="progress-bar" id="progressBar"></div>
+  <div class="container">
+    <div class="header" id="headerBlock">
+      <h1>人工智慧導入臨床試驗之機會，挑戰與營運衝擊</h1>
+      <h2>以受委託臨床試驗機構（CRO）為例</h2>
+      <p>您好，這是一份純學術之問卷研究，本問卷所有資料僅作為研究之目的，並絕對保密。<br>請您依實際感受最直接反映填寫此份問卷，誠摯感謝您的熱心協助！</p>
+      <p>國立台北大學企業管理研究所<br>指導教授：劉仲矩 老師 ｜ 研究生：蔡秋君</p>
+    </div>
+    <form id="surveyForm" novalidate>
+      <div class="card">
+        <h3>影響程度評分說明</h3>
+        <table class="scale-table">
+          <tr><th>等級</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th></tr>
+          <tr><td><strong>影響程度</strong></td><td>無影響</td><td>低度影響</td><td>中度影響</td><td>高度影響</td><td>極高度影響</td></tr>
+        </table>
+        <div class="example">
+          <p><strong>範例：</strong></p>
+          <p>例一：A 對 C 的影響程度為高影響，則填入 <strong>3</strong></p>
+          <p>例二：D 對 A 的影響程度為無影響，則填入 <strong>0</strong></p>
+          <p>例三：E 對 C 的影響程度為中影響，則填入 <strong>2</strong></p>
+        </div>
+      </div>
+      <div class="card"><h3 id="factorTitle">影響因素說明</h3><ul class="factor-list" id="factorListDisplay"></ul></div>
+      <div class="card">
+        <h3 id="matrixTitle">構面影響關係之評比 <span class="required-mark">*</span></h3>
+        <p style="margin-bottom:12px;font-size:.9rem;color:var(--muted)">依據您的經驗與觀察，評估「縱列（左側）因素」對「橫列（上方）因素」的影響程度（0~4）。對角線為自身對自身，無需填寫。</p>
+        <div class="matrix-wrapper"><table class="matrix" id="dematelMatrix"><thead id="matrixHead"></thead><tbody id="matrixBody"></tbody></table></div>
+        <p class="error-msg" id="matrixError">請完成所有影響程度評分。</p>
+      </div>
+      <div class="card"><h3 id="personalInfoTitle">個人基本資料</h3><div id="personalInfoBody"></div></div>
+      <button type="submit" class="btn-submit" id="submitBtn">提交問卷</button>
+    </form>
+    <div style="text-align:center;padding:20px 0;font-size:.8rem;color:var(--muted)">此份問卷到此結束，感謝您在百忙之中撥冗填答，衷心感謝您對本研究之支持！</div>
+  </div>
+</div>
+
+<!-- ==================== 編輯器 ==================== -->
+<div id="editorView">
+  <div class="container">
+    <div class="editor-bar">
+      <div>
+        <h1>DEMATEL 問卷編輯器</h1>
+        <p class="desc">依問卷順序編輯：Header → 影響因素 → 個人基本資料（按 Ctrl+E 返回問卷）</p>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn btn-success" onclick="editorSaveAndReturn()">儲存並套用至問卷</button>
+      <button class="btn btn-outline" onclick="editorExportJSON()">匯出 JSON</button>
+      <button class="btn btn-outline" onclick="document.getElementById('importFile').click()">匯入 JSON</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="editorImportJSON(event)">
+      <button class="btn btn-danger btn-sm" onclick="editorConfirmReset()">還原預設</button>
+    </div>
+
+    <div class="section-card">
+      <div class="section-header"><h3>① 問卷 Header</h3></div>
+      <div class="section-body">
+        <div class="color-picker-row">
+          <div class="color-picker-group">
+            <label>背景色</label>
+            <input type="color" id="colorBg" value="#2c5f8a" onchange="editorUpdateHeaderBg()">
+          </div>
+        </div>
+        <div class="header-quill-wrap header-toolbar-wrap" id="headerQuillWrap">
+          <div id="headerToolbar">
+            <select class="ql-header"><option value="1">主標題</option><option value="2">副標題</option><option selected>內文</option></select>
+            <button class="ql-bold"></button><button class="ql-italic"></button><button class="ql-underline"></button>
+            <select class="ql-align"><option selected></option><option value="center"></option><option value="right"></option></select>
+            <button class="ql-link"></button><button class="ql-clean"></button>
+          </div>
+          <div id="headerQuill"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-header">
+        <h3>② 影響因素項目</h3>
+        <div><span class="section-badge" id="countBadge">0 項</span><button class="btn btn-primary btn-sm" style="margin-left:8px" onclick="editorAddFactor()">＋ 新增</button></div>
+      </div>
+      <div id="factorList"></div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-header">
+        <h3>③ 個人基本資料</h3>
+        <div><span class="section-badge" id="questionCountBadge">0 題</span><button class="btn btn-primary btn-sm" style="margin-left:8px" onclick="editorAddQuestion()">＋ 新增題目</button></div>
+      </div>
+      <div class="section-body">
+        <div class="question-top" style="margin-bottom:16px">
+          <label style="font-weight:600;color:var(--primary);font-size:.9rem;white-space:nowrap">區段標題：</label>
+          <input type="text" id="personalSectionTitle" value="個人基本資料" style="flex:1;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:.9rem;font-family:inherit">
+        </div>
+        <div id="questionList"></div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-header"><h3>④ 提交設定（Google Sheets）</h3></div>
+      <div class="section-body">
+        <label style="font-weight:600;color:var(--primary);font-size:.9rem">Google Sheets API 網址</label>
+        <input type="text" id="cfgApiUrl" placeholder="https://script.google.com/macros/s/xxxxx/exec" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:.88rem;font-family:inherit;margin-top:6px">
+        <p style="font-size:.8rem;color:var(--muted);margin-top:6px">部署 Google Apps Script 後取得的網址。若留空，提交時會改為下載 JSON 檔案。</p>
+
+        <details style="margin-top:16px;border:1px solid var(--border);border-radius:8px;padding:0;background:#f8f9fa">
+          <summary style="cursor:pointer;padding:12px 16px;font-weight:600;color:var(--primary);font-size:.9rem;user-select:none">📋 部署步驟與 Apps Script 程式碼</summary>
+          <div style="padding:0 16px 16px">
+            <ol style="font-size:.85rem;color:#333;line-height:1.8;padding-left:20px;margin:12px 0">
+              <li>開一個新的 <strong>Google Sheets</strong></li>
+              <li>上方選單 → <strong>擴充功能</strong> → <strong>Apps Script</strong></li>
+              <li>將下方程式碼<strong>全選複製</strong>，貼上取代預設內容</li>
+              <li>點擊「<strong>部署</strong>」→「<strong>新增部署</strong>」→ 類型選「<strong>網頁應用程式</strong>」
+                <ul style="margin:4px 0;padding-left:16px;list-style:disc">
+                  <li>執行身分：<strong>我</strong></li>
+                  <li>誰可以存取：<strong>所有人</strong></li>
+                </ul>
+              </li>
+              <li>點擊「部署」，完成授權後<strong>複製產生的網址</strong></li>
+              <li>將網址貼到上方「Google Sheets API 網址」欄位</li>
+            </ol>
+            <div style="position:relative">
+              <button onclick="editorCopyScript(this)" style="position:absolute;top:8px;right:8px;background:var(--primary);color:#fff;border:none;border-radius:4px;padding:4px 12px;font-size:.78rem;cursor:pointer;z-index:1">複製程式碼</button>
+              <pre id="gasCodeBlock" style="background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:14px;font-size:.78rem;line-height:1.6;overflow-x:auto;margin:0;white-space:pre;tab-size:2">function doPost(e) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var data = JSON.parse(e.postData.contents);
+
+    // first response: write headers
+    if (sheet.getLastRow() === 0) {
+      var headers = ['提交時間'];
+      var matrixKeys = Object.keys(data.matrix).sort();
+      matrixKeys.forEach(function(k) { headers.push(k); });
+      var personalKeys = Object.keys(data.personal);
+      personalKeys.forEach(function(k) { headers.push(k); });
+      sheet.appendRow(headers);
+    }
+
+    // read existing headers to match column order
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var row = [];
+    headers.forEach(function(h) {
+      if (h === '提交時間') {
+        row.push(data.timestamp || new Date().toISOString());
+      } else if (data.matrix &amp;&amp; data.matrix[h] !== undefined) {
+        row.push(data.matrix[h]);
+      } else if (data.personal &amp;&amp; data.personal[h] !== undefined) {
+        row.push(data.personal[h]);
+      } else {
+        row.push('');
+      }
+    });
+
+    sheet.appendRow(row);
+
+    return ContentService
+      .createTextOutput(JSON.stringify({status: 'ok'}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({status: 'error', message: err.toString()}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}</pre>
+            </div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3 id="modalTitle">確認</h3>
+    <p id="modalMsg"></p>
+    <div class="btn-group">
+      <button class="btn btn-outline" onclick="editorCloseModal()">取消</button>
+      <button class="btn btn-danger" id="modalConfirmBtn">確認</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== 頁面切換 =====
+var isEditorMode = location.hash === '#editor';
+
+function showView(mode) {
+  if (mode === 'editor') {
+    document.getElementById('surveyView').style.display = 'none';
+    document.getElementById('editorView').style.display = 'block';
+    location.hash = '#editor';
+    initEditor();
+  } else {
+    document.getElementById('editorView').style.display = 'none';
+    document.getElementById('surveyView').style.display = 'block';
+    if (location.hash) history.replaceState(null, '', location.pathname);
+  }
+  window.scrollTo(0, 0);
+}
+
+// Ctrl+E 切換
+document.addEventListener('keydown', function(e) {
+  if (e.ctrlKey && e.key === 'e') {
+    e.preventDefault();
+    var current = document.getElementById('editorView').style.display !== 'none' ? 'editor' : 'survey';
+    if (current === 'editor') {
+      showView('survey');
+    } else {
+      showView('editor');
+    }
+  }
+});
+
+// ===== 預設資料 =====
+var DEFAULT_HEADER_HTML = '<h1 class="ql-align-center">人工智慧導入臨床試驗之機會，挑戰與營運衝擊</h1>'
+  + '<h2 class="ql-align-center">以受委託臨床試驗機構（CRO）為例</h2>'
+  + '<p class="ql-align-center"><br></p>'
+  + '<p class="ql-align-center">您好，這是一份純學術之問卷研究，本問卷所有資料僅作為研究之目的，並絕對保密。</p>'
+  + '<p class="ql-align-center">請您依實際感受最直接反映填寫此份問卷，誠摯感謝您的熱心協助！</p>'
+  + '<p class="ql-align-center"><br></p>'
+  + '<p class="ql-align-center">國立台北大學企業管理研究所</p>'
+  + '<p class="ql-align-center">指導教授：劉仲矩 老師 ｜ 研究生：蔡秋君</p>';
+var DEFAULT_COLOR_BG = '#2c5f8a';
+var DEFAULT_FACTORS = [
+  {code:'A',name:'資料分析能力',desc:'AI技術在臨床試驗資料處理、統計分析與預測分析的能力。'},
+  {code:'B',name:'準確與可靠性',desc:'AI模型在臨床試驗應用中的預測準確度、穩定性與可驗證性。'},
+  {code:'C',name:'系統整合能力',desc:'AI系統與臨床試驗相關系統（如EDC、CTMS、ePRO）的整合能力。'},
+  {code:'D',name:'臨床試驗監測效率',desc:'AI在風險導向監測與試驗品質管理中的應用能力。'},
+  {code:'E',name:'臨床試驗資料處理速度',desc:'AI導入後對臨床試驗資料收集、清理與分析速度的提升程度。'},
+  {code:'F',name:'臨床試驗資料品質',desc:'臨床試驗資料的完整性、準確性與一致性。'},
+  {code:'G',name:'受試者招募效率',desc:'AI應用在患者篩選與招募過程中對效率提升的程度。'},
+  {code:'H',name:'資訊安全與隱私保護',desc:'AI應用過程中對資料保護與資訊安全的管理能力。'},
+  {code:'I',name:'主管機關法規明確性',desc:'法規單位對AI應用於臨床試驗之規範的清晰程度。'},
+  {code:'J',name:'法規遵循成本',desc:'CRO為符合AI相關法規與GCP要求所需投入的成本。'},
+  {code:'K',name:'法規審查與核准效率',desc:'法規單位對AI工具或方法在臨床試驗中使用的審查效率。'},
+  {code:'L',name:'專業人才與數據分析能力',desc:'CRO內部具備AI、數據科學與臨床資料分析能力的人才程度。'},
+  {code:'M',name:'公司資源投入與管理支持',desc:'決策層推動AI轉型，預算編列、試錯容忍度上的支持。'},
+  {code:'N',name:'CRO市場競爭力',desc:'AI導入對CRO服務差異化與市場競爭優勢的影響。'},
+  {code:'O',name:'藥廠委外需求考量',desc:'藥廠在評選供應商時，將具備AI解決方案列為加分條件。'}
+];
+var DEFAULT_QUESTIONS = [
+  {label:'心理性別',name:'gender',options:['男','女'],hasOther:false},
+  {label:'年齡',name:'age',options:['20歲以下','21-30歲','31-40歲','41-50歲','51歲以上'],hasOther:false},
+  {label:'業界年資',name:'experience',options:['0-5年(含)','6-10年(含)','11-20年(含)','21-30年(含)','30年以上'],hasOther:false},
+  {label:'教育學歷（最高）',name:'education',options:['高中職','大學','研究所以上'],hasOther:true},
+  {label:'部門',name:'department',options:['醫藥學術部','臨床試驗部','法規部','業務部','資訊部','管理部','財務部'],hasOther:true}
+];
+var DEFAULT_PERSONAL_TITLE = '個人基本資料';
+
+function cloneArr(a) { return JSON.parse(JSON.stringify(a)); }
+function lsGet(k) { try { return localStorage.getItem(k); } catch(e) { return null; } }
+function lsJSON(k, fallback) { try { var s = lsGet(k); if (s) { var p = JSON.parse(s); if (Array.isArray(p) && p.length) return p; } } catch(e) {} return cloneArr(fallback); }
+
+// ===== 問卷邏輯 =====
+function initSurvey() {
+  var factors = lsJSON('dematel_factors', DEFAULT_FACTORS);
+  var personalQuestions = lsJSON('dematel_questions', DEFAULT_QUESTIONS);
+
+  // Header
+  var hdr = lsGet('dematel_header');
+  if (hdr) document.getElementById('headerBlock').innerHTML = hdr;
+  var bg = lsGet('dematel_color_bg');
+  if (bg) document.getElementById('headerBlock').style.background = bg;
+
+  // Personal title
+  var pt = lsGet('dematel_personal_title');
+  if (pt) document.getElementById('personalInfoTitle').textContent = pt;
+
+  // Factor list
+  var ul = document.getElementById('factorListDisplay');
+  ul.innerHTML = '';
+  document.getElementById('factorTitle').textContent = factors.length + '項影響因素說明';
+  factors.forEach(function(f) {
+    var li = document.createElement('li');
+    li.innerHTML = '<strong>' + f.code + '. ' + f.name + '</strong>' + f.desc;
+    ul.appendChild(li);
+  });
+
+  // Matrix head
+  var thead = document.getElementById('matrixHead');
+  thead.innerHTML = '';
+  document.getElementById('matrixTitle').innerHTML = factors.length + '項構面影響關係之評比 <span class="required-mark">*</span>';
+  var tr = document.createElement('tr');
+  var th0 = document.createElement('th'); th0.textContent = '影響方向 →'; tr.appendChild(th0);
+  factors.forEach(function(f) { var th = document.createElement('th'); th.innerHTML = f.code + '<br>' + f.name; tr.appendChild(th); });
+  thead.appendChild(tr);
+
+  // Tooltip
+  var tooltip = document.createElement('div'); tooltip.className = 'tooltip-popup'; document.body.appendChild(tooltip);
+  function showTip(e,c,n,d) { tooltip.innerHTML = '<div class="tip-title">'+c+'. '+n+'</div>'+d; tooltip.classList.add('visible'); posTip(e); }
+  function posTip(e) { var x=e.clientX+14,y=e.clientY+14; if(x+tooltip.offsetWidth>innerWidth-10)x=e.clientX-tooltip.offsetWidth-10; if(y+tooltip.offsetHeight>innerHeight-10)y=e.clientY-tooltip.offsetHeight-10; tooltip.style.left=x+'px'; tooltip.style.top=y+'px'; }
+  function hideTip() { tooltip.classList.remove('visible'); }
+  function bindTip(el,f) { el.setAttribute('data-tooltip',f.code); el.addEventListener('mouseenter',function(e){showTip(e,f.code,f.name,f.desc)}); el.addEventListener('mousemove',posTip); el.addEventListener('mouseleave',hideTip); }
+
+  document.querySelectorAll('.matrix thead th').forEach(function(th,i) { if(i===0) return; bindTip(th,factors[i-1]); });
+
+  // Matrix body
+  var tbody = document.getElementById('matrixBody');
+  tbody.innerHTML = '';
+  factors.forEach(function(rowF,ri) {
+    var tr = document.createElement('tr');
+    var th = document.createElement('th'); th.textContent = rowF.code + ' ' + rowF.name; bindTip(th,rowF); tr.appendChild(th);
+    factors.forEach(function(colF,ci) {
+      var td = document.createElement('td');
+      if (ri===ci) { td.className='diagonal'; td.textContent='—'; }
+      else {
+        var sel = document.createElement('select'); sel.name='matrix_'+rowF.code+'_'+colF.code; sel.setAttribute('data-cell','1');
+        var o = document.createElement('option'); o.value=''; o.textContent='-'; sel.appendChild(o);
+        for(var v=0;v<=4;v++){var op=document.createElement('option');op.value=v;op.textContent=v;sel.appendChild(op)}
+        sel.addEventListener('change',function(){this.className=this.value!==''?'filled':'';updateProgress()});
+        td.appendChild(sel);
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+
+  // Personal info
+  var container = document.getElementById('personalInfoBody');
+  container.innerHTML = '';
+  personalQuestions.forEach(function(q) {
+    var div = document.createElement('div'); div.className = 'form-group';
+    var lbl = document.createElement('label'); lbl.innerHTML = q.label + ' <span class="required-mark">*</span>'; div.appendChild(lbl);
+    var opts = document.createElement('div'); opts.className = 'options';
+    q.options.forEach(function(opt,oi) {
+      var wl = document.createElement('label'); var r = document.createElement('input');
+      r.type='radio'; r.name=q.name; r.value=opt; if(oi===0)r.required=true;
+      var s = document.createElement('span'); s.textContent=opt; wl.appendChild(r); wl.appendChild(s); opts.appendChild(wl);
+    });
+    if (q.hasOther) {
+      var ol=document.createElement('label');var or=document.createElement('input');or.type='radio';or.name=q.name;or.value='其他';
+      var os=document.createElement('span');os.textContent='其他';ol.appendChild(or);ol.appendChild(os);opts.appendChild(ol);
+      var oi=document.createElement('input');oi.type='text';oi.name=q.name+'_other';oi.placeholder='請輸入'+q.label;oi.style.cssText='margin-top:8px;display:none';
+      div.appendChild(opts);div.appendChild(oi);
+      setTimeout(function(qn,oel){document.querySelectorAll('input[name="'+qn+'"]').forEach(function(r){r.addEventListener('change',function(){oel.style.display=this.value==='其他'?'block':'none'})})}.bind(null,q.name,oi),0);
+    } else { div.appendChild(opts); }
+    container.appendChild(div);
+  });
+
+  // Progress
+  var totalCells = factors.length * (factors.length - 1);
+  var radioGroupNames = personalQuestions.map(function(q){return q.name});
+  window.updateProgress = function() {
+    var f = document.querySelectorAll('select.filled').length;
+    var rf = 0; radioGroupNames.forEach(function(n){if(document.querySelector('input[name="'+n+'"]:checked'))rf++});
+    document.getElementById('progressBar').style.width = ((f+rf)/(totalCells+radioGroupNames.length)*100)+'%';
+  };
+  document.querySelectorAll('input[type="radio"]').forEach(function(r){r.addEventListener('change',updateProgress)});
+
+  // Submit
+  document.getElementById('surveyForm').onsubmit = function(e) {
+    e.preventDefault();
+    var allS = document.querySelectorAll('select[data-cell]'); var ok=true;
+    allS.forEach(function(s){if(s.value==='')ok=false});
+    if(!ok){document.getElementById('matrixError').style.display='block';document.querySelector('.matrix-wrapper').scrollIntoView({behavior:'smooth'});return}
+    document.getElementById('matrixError').style.display='none';
+    for(var i=0;i<radioGroupNames.length;i++){if(!document.querySelector('input[name="'+radioGroupNames[i]+'"]:checked')){document.querySelector('input[name="'+radioGroupNames[i]+'"]').closest('.form-group').scrollIntoView({behavior:'smooth'});return}}
+    var result={timestamp:new Date().toISOString(),matrix:{},personal:{}};
+    allS.forEach(function(s){result.matrix[s.name]=parseInt(s.value)});
+    radioGroupNames.forEach(function(n){var c=document.querySelector('input[name="'+n+'"]:checked');result.personal[n]=c?c.value:'';if(result.personal[n]==='其他'){var oi=document.querySelector('input[name="'+n+'_other"]');if(oi)result.personal[n+'_other']=oi.value}});
+    var btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='提交中...';
+    var apiUrl=lsGet('dematel_api_url')||'';
+    if(apiUrl){fetch(apiUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(result)}).then(done).catch(done)}
+    else{var b=new Blob([JSON.stringify(result,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='DEMATEL_response_'+Date.now()+'.json';a.click();done()}
+    function done(){var t=document.getElementById('toast');t.textContent='問卷已成功提交，感謝您的參與！';t.classList.add('show');setTimeout(function(){t.classList.remove('show')},3000);btn.textContent='已提交'}
+  };
+}
+
+// ===== 編輯器邏輯 =====
+var editorInited = false;
+var quill = null;
+var edFactors = [];
+var edQuestions = [];
+var edDragSrc = null;
+
+function initEditor() {
+  if (editorInited) return;
+  editorInited = true;
+
+  // 載入 Quill
+  var css = document.getElementById('quillCSS');
+  css.href = 'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css';
+  css.disabled = false;
+  var sc = document.createElement('script');
+  sc.src = 'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js';
+  sc.onload = function() {
+    quill = new Quill('#headerQuill', { modules:{toolbar:'#headerToolbar'}, theme:'snow', placeholder:'在此編輯問卷 Header 內容...' });
+    editorLoadAll();
+  };
+  document.head.appendChild(sc);
+}
+
+function editorLoadAll() {
+  quill.root.innerHTML = lsGet('dematel_header') || DEFAULT_HEADER_HTML;
+  document.getElementById('colorBg').value = lsGet('dematel_color_bg') || DEFAULT_COLOR_BG;
+  editorUpdateHeaderBg();
+  edFactors = lsJSON('dematel_factors', DEFAULT_FACTORS);
+  editorRenderFactors();
+  edQuestions = lsJSON('dematel_questions', DEFAULT_QUESTIONS);
+  document.getElementById('personalSectionTitle').value = lsGet('dematel_personal_title') || DEFAULT_PERSONAL_TITLE;
+  editorRenderQuestions();
+  document.getElementById('cfgApiUrl').value = lsGet('dematel_api_url') || '';
+}
+
+function editorUpdateHeaderBg() {
+  document.getElementById('headerQuillWrap').style.background = document.getElementById('colorBg').value;
+}
+
+function editorSaveAndReturn() {
+  editorSyncFactors(); editorUpdateCodes(); editorSyncQuestions();
+  localStorage.setItem('dematel_header', quill.root.innerHTML);
+  localStorage.setItem('dematel_color_bg', document.getElementById('colorBg').value);
+  localStorage.setItem('dematel_factors', JSON.stringify(edFactors));
+  localStorage.setItem('dematel_questions', JSON.stringify(edQuestions));
+  localStorage.setItem('dematel_personal_title', document.getElementById('personalSectionTitle').value);
+  localStorage.setItem('dematel_api_url', document.getElementById('cfgApiUrl').value.trim());
+  // 重新渲染問卷並切回
+  initSurvey();
+  showView('survey');
+  showToastMsg('已儲存並套用！');
+}
+
+// Factor helpers
+function esc(s){return(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+function escH(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function editorGenCode(i){var c='',n=i;do{c=String.fromCharCode(65+(n%26))+c;n=Math.floor(n/26)-1}while(n>=0);return c}
+function editorUpdateCodes(){edFactors.forEach(function(f,i){f.code=editorGenCode(i)})}
+
+function editorRenderFactors() {
+  var list=document.getElementById('factorList');
+  document.getElementById('countBadge').textContent=edFactors.length+' 項';
+  if(!edFactors.length){list.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>尚無因素，點擊「新增」</p></div>';return}
+  var html='';
+  edFactors.forEach(function(f,i){
+    html+='<div class="factor-item" draggable="true" data-index="'+i+'"><div class="drag-handle" title="拖曳排序">⠿</div><div class="factor-code">'+f.code+'</div><div class="factor-content"><input type="text" value="'+esc(f.name)+'" placeholder="因素名稱"><textarea placeholder="因素說明">'+escH(f.desc)+'</textarea></div><div class="factor-actions"><button class="btn-del" title="刪除" onclick="editorDeleteFactor('+i+')">✕</button></div></div>';
+  });
+  list.innerHTML=html;
+  editorBindDrag();
+}
+
+function editorSyncFactors(){document.querySelectorAll('.factor-item').forEach(function(item,i){var nm=item.querySelector('input'),ds=item.querySelector('textarea');if(nm&&edFactors[i])edFactors[i].name=nm.value;if(ds&&edFactors[i])edFactors[i].desc=ds.value})}
+
+function editorAddFactor(){editorSyncFactors();edFactors.push({code:'',name:'',desc:''});editorUpdateCodes();editorRenderFactors();var items=document.querySelectorAll('.factor-item');var last=items[items.length-1];if(last){last.scrollIntoView({behavior:'smooth'});setTimeout(function(){last.querySelector('input').focus()},200)}}
+
+function editorDeleteFactor(i){editorShowModal('刪除因素','確定要刪除「'+edFactors[i].code+'. '+(edFactors[i].name||'未命名')+'」？',function(){editorSyncFactors();edFactors.splice(i,1);editorUpdateCodes();editorRenderFactors();editorCloseModal();showToastMsg('已刪除')})}
+
+function editorBindDrag(){document.querySelectorAll('.factor-item').forEach(function(item){item.addEventListener('dragstart',function(e){edDragSrc=parseInt(this.dataset.index);this.classList.add('dragging');e.dataTransfer.effectAllowed='move'});item.addEventListener('dragend',function(){this.classList.remove('dragging');document.querySelectorAll('.factor-item').forEach(function(el){el.classList.remove('drag-over')})});item.addEventListener('dragover',function(e){e.preventDefault();this.classList.add('drag-over')});item.addEventListener('dragleave',function(){this.classList.remove('drag-over')});item.addEventListener('drop',function(e){e.preventDefault();var ti=parseInt(this.dataset.index);if(edDragSrc===null||edDragSrc===ti)return;editorSyncFactors();var m=edFactors.splice(edDragSrc,1)[0];edFactors.splice(ti,0,m);editorUpdateCodes();editorRenderFactors()})})}
+
+// Question helpers
+function editorRenderQuestions(){
+  var list=document.getElementById('questionList');
+  document.getElementById('questionCountBadge').textContent=edQuestions.length+' 題';
+  if(!edQuestions.length){list.innerHTML='<div class="empty-state"><div class="icon">📝</div><p>尚無題目，點擊「新增題目」</p></div>';return}
+  var html='';
+  edQuestions.forEach(function(q,qi){
+    html+='<div class="question-item" data-qi="'+qi+'"><div class="question-top"><input type="text" value="'+esc(q.label)+'" placeholder="題目名稱" data-qf="label"><button class="btn-del" title="刪除題目" onclick="editorDeleteQuestion('+qi+')">✕</button></div><div class="chips-area">';
+    q.options.forEach(function(opt,oi){html+='<span class="chip">'+escH(opt)+'<span class="chip-remove" onclick="editorRemoveOption('+qi+','+oi+')">✕</span></span>'});
+    html+='<input type="text" class="chip-add-input" placeholder="＋ 新增選項" data-qi="'+qi+'" onkeydown="editorChipKey(event,'+qi+')"></div>';
+    html+='<label class="has-other-toggle"><input type="checkbox"'+(q.hasOther?' checked':'')+' onchange="editorToggleOther('+qi+',this.checked)"><span>包含「其他」選項（附文字輸入框）</span></label></div>';
+  });
+  list.innerHTML=html;
+}
+function editorSyncQuestions(){document.querySelectorAll('.question-item').forEach(function(item,i){var l=item.querySelector('input[data-qf="label"]');if(l&&edQuestions[i])edQuestions[i].label=l.value})}
+function editorAddQuestion(){editorSyncQuestions();edQuestions.push({label:'',name:'q'+Date.now(),options:[],hasOther:false});editorRenderQuestions();var items=document.querySelectorAll('.question-item');var last=items[items.length-1];if(last){last.scrollIntoView({behavior:'smooth'});setTimeout(function(){last.querySelector('input').focus()},200)}}
+function editorDeleteQuestion(qi){editorShowModal('刪除題目','確定要刪除「'+(edQuestions[qi].label||'未命名')+'」？',function(){editorSyncQuestions();edQuestions.splice(qi,1);editorRenderQuestions();editorCloseModal();showToastMsg('已刪除')})}
+function editorRemoveOption(qi,oi){editorSyncQuestions();edQuestions[qi].options.splice(oi,1);editorRenderQuestions()}
+function editorChipKey(e,qi){if(e.key==='Enter'){e.preventDefault();var v=e.target.value.trim();if(!v)return;editorSyncQuestions();edQuestions[qi].options.push(v);editorRenderQuestions();var inputs=document.querySelectorAll('.chip-add-input');if(inputs[qi])inputs[qi].focus()}}
+function editorToggleOther(qi,c){edQuestions[qi].hasOther=c}
+
+// Export/Import
+function editorExportJSON(){editorSyncFactors();editorUpdateCodes();editorSyncQuestions();var d={header:quill.root.innerHTML,colorBg:document.getElementById('colorBg').value,factors:edFactors,personalTitle:document.getElementById('personalSectionTitle').value,questions:edQuestions,apiUrl:document.getElementById('cfgApiUrl').value.trim()};var b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='dematel_config.json';a.click();showToastMsg('已匯出 JSON')}
+
+function editorImportJSON(event){var file=event.target.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(e){try{var d=JSON.parse(e.target.result);if(d.header)quill.root.innerHTML=d.header;if(d.colorBg)document.getElementById('colorBg').value=d.colorBg;editorUpdateHeaderBg();if(d.factors&&Array.isArray(d.factors)){edFactors=d.factors;editorUpdateCodes();editorRenderFactors()}if(d.questions&&Array.isArray(d.questions)){edQuestions=d.questions;editorRenderQuestions()}if(d.personalTitle)document.getElementById('personalSectionTitle').value=d.personalTitle;if(d.apiUrl)document.getElementById('cfgApiUrl').value=d.apiUrl;showToastMsg('已匯入成功')}catch(err){showToastMsg('匯入失敗：'+err.message)}};reader.readAsText(file);event.target.value=''}
+
+function editorConfirmReset(){editorShowModal('還原預設','確定要還原所有設定為預設值嗎？',function(){quill.root.innerHTML=DEFAULT_HEADER_HTML;document.getElementById('colorBg').value=DEFAULT_COLOR_BG;editorUpdateHeaderBg();edFactors=cloneArr(DEFAULT_FACTORS);editorRenderFactors();edQuestions=cloneArr(DEFAULT_QUESTIONS);editorRenderQuestions();document.getElementById('personalSectionTitle').value=DEFAULT_PERSONAL_TITLE;document.getElementById('cfgApiUrl').value='';['dematel_header','dematel_color_bg','dematel_factors','dematel_questions','dematel_personal_title','dematel_api_url'].forEach(function(k){localStorage.removeItem(k)});editorCloseModal();showToastMsg('已還原預設')})}
+
+// Shared UI
+function editorShowModal(t,m,fn){document.getElementById('modalTitle').textContent=t;document.getElementById('modalMsg').textContent=m;document.getElementById('modalConfirmBtn').onclick=fn;document.getElementById('modalOverlay').classList.add('active')}
+function editorCloseModal(){document.getElementById('modalOverlay').classList.remove('active')}
+function editorCopyScript(btn){var code=document.getElementById('gasCodeBlock').textContent;navigator.clipboard.writeText(code).then(function(){btn.textContent='已複製!';setTimeout(function(){btn.textContent='複製程式碼'},2000)})}
+function showToastMsg(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
+
+// ===== 初始化 =====
+initSurvey();
+if (isEditorMode) { showView('editor'); } else { showView('survey'); }
+</script>
+</body>
+</html>
