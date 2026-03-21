@@ -203,6 +203,14 @@
   .chip .chip-remove:hover { background: #fee2e2; color: var(--danger); }
   .chip-add-input { border: 1px dashed var(--border); border-radius: 20px; padding: 4px 10px; font-size: .84rem; width: 100px; outline: none; font-family: inherit; }
   .chip-add-input:focus { border-color: var(--accent); }
+  .chip-edit { border: none; background: transparent; font-size: .84rem; padding: 0; font-family: inherit; outline: none; color: var(--text); }
+  .chip-edit:focus { color: var(--primary); }
+  .chip.chip-dragging { opacity: .4; }
+  .chip.chip-drag-over { border-left: 3px solid var(--accent); }
+  .question-item.q-dragging { opacity: .5; background: var(--primary-light); }
+  .question-item.q-drag-over { border-top: 3px solid var(--accent); }
+  .q-drag-handle { cursor: grab; color: var(--muted); font-size: 1.2rem; user-select: none; flex-shrink: 0; }
+  .q-drag-handle:active { cursor: grabbing; }
   .has-other-toggle { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: .82rem; color: var(--muted); }
   .has-other-toggle input { cursor: pointer; }
 
@@ -645,6 +653,8 @@ var quill = null;
 var edFactors = [];
 var edQuestions = [];
 var edDragSrc = null;
+var edQDragSrc = null;
+var edChipDrag = null;
 
 function initEditor() {
   if (editorInited) return;
@@ -726,12 +736,14 @@ function editorRenderQuestions(){
   if(!edQuestions.length){list.innerHTML='<div class="empty-state"><div class="icon">📝</div><p>尚無題目，點擊「新增題目」</p></div>';return}
   var html='';
   edQuestions.forEach(function(q,qi){
-    html+='<div class="question-item" data-qi="'+qi+'"><div class="question-top"><input type="text" value="'+esc(q.label)+'" placeholder="題目名稱" data-qf="label"><button class="btn-del" title="刪除題目" onclick="editorDeleteQuestion('+qi+')">✕</button></div><div class="chips-area">';
-    q.options.forEach(function(opt,oi){html+='<span class="chip">'+escH(opt)+'<span class="chip-remove" onclick="editorRemoveOption('+qi+','+oi+')">✕</span></span>'});
+    html+='<div class="question-item" data-qi="'+qi+'" draggable="true"><div class="question-top"><span class="q-drag-handle" title="拖曳排序">⠿</span><input type="text" value="'+esc(q.label)+'" placeholder="題目名稱" data-qf="label"><button class="btn-del" title="刪除題目" onclick="editorDeleteQuestion('+qi+')">✕</button></div><div class="chips-area">';
+    q.options.forEach(function(opt,oi){html+='<span class="chip" draggable="true" data-qi="'+qi+'" data-oi="'+oi+'"><input class="chip-edit" type="text" value="'+esc(opt)+'" size="'+Math.max(opt.length||2,2)+'" oninput="this.size=Math.max(this.value.length,2)" onchange="editorUpdateOption('+qi+','+oi+',this.value)"><span class="chip-remove" onclick="editorRemoveOption('+qi+','+oi+')">✕</span></span>'});
     html+='<input type="text" class="chip-add-input" placeholder="＋ 新增選項" data-qi="'+qi+'" onkeydown="editorChipKey(event,'+qi+')"></div>';
     html+='<label class="has-other-toggle"><input type="checkbox"'+(q.hasOther?' checked':'')+' onchange="editorToggleOther('+qi+',this.checked)"><span>包含「其他」選項（附文字輸入框）</span></label></div>';
   });
   list.innerHTML=html;
+  editorBindQuestionDrag();
+  editorBindChipDrag();
 }
 function editorSyncQuestions(){document.querySelectorAll('.question-item').forEach(function(item,i){var l=item.querySelector('input[data-qf="label"]');if(l&&edQuestions[i])edQuestions[i].label=l.value})}
 function editorAddQuestion(){editorSyncQuestions();edQuestions.push({label:'',name:'q'+Date.now(),options:[],hasOther:false});editorRenderQuestions();var items=document.querySelectorAll('.question-item');var last=items[items.length-1];if(last){last.scrollIntoView({behavior:'smooth'});setTimeout(function(){last.querySelector('input').focus()},200)}}
@@ -739,6 +751,48 @@ function editorDeleteQuestion(qi){editorShowModal('刪除題目','確定要刪�
 function editorRemoveOption(qi,oi){editorSyncQuestions();edQuestions[qi].options.splice(oi,1);editorRenderQuestions()}
 function editorChipKey(e,qi){if(e.key==='Enter'){e.preventDefault();var v=e.target.value.trim();if(!v)return;editorSyncQuestions();edQuestions[qi].options.push(v);editorRenderQuestions();var inputs=document.querySelectorAll('.chip-add-input');if(inputs[qi])inputs[qi].focus()}}
 function editorToggleOther(qi,c){edQuestions[qi].hasOther=c}
+function editorUpdateOption(qi,oi,val){edQuestions[qi].options[oi]=val}
+
+function editorBindQuestionDrag(){
+  document.querySelectorAll('.question-item').forEach(function(item){
+    var handle=item.querySelector('.q-drag-handle');
+    handle.addEventListener('mousedown',function(){item.setAttribute('draggable','true')});
+    item.addEventListener('dragstart',function(e){
+      if(!e.target.classList.contains('chip')){edQDragSrc=parseInt(this.dataset.qi);this.classList.add('q-dragging');e.dataTransfer.effectAllowed='move'}
+    });
+    item.addEventListener('dragend',function(){this.classList.remove('q-dragging');document.querySelectorAll('.question-item').forEach(function(el){el.classList.remove('q-drag-over')})});
+    item.addEventListener('dragover',function(e){if(edQDragSrc!==null){e.preventDefault();this.classList.add('q-drag-over')}});
+    item.addEventListener('dragleave',function(){this.classList.remove('q-drag-over')});
+    item.addEventListener('drop',function(e){
+      if(edQDragSrc===null)return;
+      e.preventDefault();var ti=parseInt(this.dataset.qi);
+      if(edQDragSrc===ti)return;
+      editorSyncQuestions();var m=edQuestions.splice(edQDragSrc,1)[0];edQuestions.splice(ti,0,m);editorRenderQuestions();edQDragSrc=null;
+    });
+  });
+}
+
+function editorBindChipDrag(){
+  document.querySelectorAll('.chips-area .chip').forEach(function(chip){
+    chip.addEventListener('dragstart',function(e){
+      e.stopPropagation();
+      edChipDrag={qi:parseInt(this.dataset.qi),oi:parseInt(this.dataset.oi)};
+      this.classList.add('chip-dragging');e.dataTransfer.effectAllowed='move';
+    });
+    chip.addEventListener('dragend',function(){this.classList.remove('chip-dragging');document.querySelectorAll('.chip').forEach(function(c){c.classList.remove('chip-drag-over')})});
+    chip.addEventListener('dragover',function(e){if(edChipDrag&&parseInt(this.dataset.qi)===edChipDrag.qi){e.preventDefault();e.stopPropagation();this.classList.add('chip-drag-over')}});
+    chip.addEventListener('dragleave',function(){this.classList.remove('chip-drag-over')});
+    chip.addEventListener('drop',function(e){
+      if(!edChipDrag)return;
+      e.preventDefault();e.stopPropagation();
+      var qi=parseInt(this.dataset.qi),oi=parseInt(this.dataset.oi);
+      if(qi!==edChipDrag.qi||oi===edChipDrag.oi){edChipDrag=null;return}
+      var m=edQuestions[qi].options.splice(edChipDrag.oi,1)[0];
+      edQuestions[qi].options.splice(oi,0,m);
+      edChipDrag=null;editorRenderQuestions();
+    });
+  });
+}
 
 // Export/Import
 function editorExportJSON(){editorSyncFactors();editorUpdateCodes();editorSyncQuestions();var d={header:quill.root.innerHTML,colorBg:document.getElementById('colorBg').value,factors:edFactors,personalTitle:document.getElementById('personalSectionTitle').value,questions:edQuestions,apiUrl:document.getElementById('cfgApiUrl').value.trim()};var b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='dematel_config.json';a.click();showToastMsg('已匯出 JSON')}
